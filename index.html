@@ -3146,7 +3146,7 @@
       document.querySelectorAll('.proof-img-wrap').forEach(wrap => {
         wrap.addEventListener('click', () => {
           const img = wrap.querySelector('img');
-          const fullSrc = wrap.getAttribute('data-img') || img.src;
+          const fullSrc = (img && img.currentSrc) ? img.currentSrc : (wrap.getAttribute('data-img') || img.src);
           const capText = wrap.getAttribute('data-caption') || img.alt;
           openModal(fullSrc, capText);
         });
@@ -3424,8 +3424,26 @@
       });
     }
 
+    /* Automatic Smart Image Fallback (loads from either root or assets/) */
+    function initImageFallbacks() {
+      document.querySelectorAll('img').forEach(img => {
+        img.addEventListener('error', function() {
+          if (!this.dataset.fallbackTried) {
+            this.dataset.fallbackTried = 'true';
+            const curSrc = this.getAttribute('src') || '';
+            if (curSrc.startsWith('assets/')) {
+              this.src = curSrc.replace(/^assets\//, '');
+            } else if (!curSrc.includes('://')) {
+              this.src = 'assets/' + curSrc;
+            }
+          }
+        });
+      });
+    }
+
     // Run on DOM ready
     document.addEventListener('DOMContentLoaded', () => {
+      initImageFallbacks();
       applyConfiguration();
       initFaq();
       initLightbox();
